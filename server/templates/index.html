@@ -31,14 +31,15 @@
       }
       .star {
         position: absolute;
-        font-size: 12vmin;
-        color: #d13e00;
-        text-shadow: 0 0 10px rgba(209, 62, 0, 0.5);
+        width: 6vmin;
+        height: 6vmin;
+        fill: #d13e00;
+        filter: drop-shadow(0 0 10px rgba(209, 62, 0, 0.5));
         transition: all 0.3s ease;
       }
       .led-on .star {
-        color: #e74c3c;
-        text-shadow: 0 0 20px #e74c3c, 0 0 40px #e74c3c;
+        fill: #e74c3c;
+        filter: drop-shadow(0 0 20px #e74c3c) drop-shadow(0 0 40px #e74c3c);
         animation: twinkle 1.5s ease-in-out infinite alternate;
       }
       @keyframes twinkle {
@@ -56,20 +57,20 @@
         }
       }
       .star-1 {
-        top: 23%;
-        left: 27%;
+        top: 30%;
+        left: 30%;
       }
       .star-2 {
-        top: 23%;
-        right: 27%;
+        top: 30%;
+        right: 30%;
       }
       .star-3 {
-        bottom: 23%;
-        left: 27%;
+        bottom: 30%;
+        left: 30%;
       }
       .star-4 {
-        bottom: 23%;
-        right: 27%;
+        bottom: 30%;
+        right: 30%;
       }
       .led-on {
         background-color: #fda52f;
@@ -100,10 +101,26 @@
   </head>
   <body>
     <div id="led" class="led-indicator led-off" onclick="toggleLED()">
-      <div class="star star-1">★</div>
-      <div class="star star-2">★</div>
-      <div class="star star-3">★</div>
-      <div class="star star-4">★</div>
+      <svg class="star star-1" viewBox="0 0 24 24">
+        <path
+          d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+        />
+      </svg>
+      <svg class="star star-2" viewBox="0 0 24 24">
+        <path
+          d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+        />
+      </svg>
+      <svg class="star star-3" viewBox="0 0 24 24">
+        <path
+          d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+        />
+      </svg>
+      <svg class="star star-4" viewBox="0 0 24 24">
+        <path
+          d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+        />
+      </svg>
     </div>
 
     <script>
