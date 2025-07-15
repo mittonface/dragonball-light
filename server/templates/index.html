@@ -37,8 +37,8 @@
         transition: all 0.3s ease;
       }
       .led-on .star {
-        color: #e67e22;
-        text-shadow: 0 0 20px #e67e22, 0 0 40px #e67e22;
+        color: #e74c3c;
+        text-shadow: 0 0 20px #e74c3c, 0 0 40px #e74c3c;
         animation: twinkle 1.5s ease-in-out infinite alternate;
       }
       @keyframes twinkle {
@@ -76,7 +76,7 @@
         box-shadow: 0 0 30px #fda52f;
       }
       .led-off {
-        background-color: #f44c1e;
+        background-color: #cc6633;
       }
       .status {
         margin-top: 1rem;
@@ -99,7 +99,7 @@
     </style>
   </head>
   <body>
-    <div id="led" class="led-indicator led-on" onclick="toggleLED()">
+    <div id="led" class="led-indicator led-off" onclick="toggleLED()">
       <div class="star star-1">★</div>
       <div class="star star-2">★</div>
       <div class="star star-3">★</div>
