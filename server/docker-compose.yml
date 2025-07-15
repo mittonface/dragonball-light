@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   led-server:
-    build: ./server
+    image: dragonball-control:latest
     container_name: led-control-server
     ports:
       - "5005:5005"
