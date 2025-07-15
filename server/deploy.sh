@@ -3,6 +3,15 @@ set -e
 
 echo "🚀 Starting deployment..."
 
+# Move to the parent directory where docker-compose.yml should be
+cd "$(dirname "$0")/.."
+
+# Copy docker-compose.yml from server directory if it exists there
+if [ -f "server/docker-compose.yml" ] && [ ! -f "docker-compose.yml" ]; then
+    echo "📋 Moving docker-compose.yml to project root..."
+    cp server/docker-compose.yml .
+fi
+
 # Build the Docker image
 echo "🔨 Building Docker image..."
 docker-compose build

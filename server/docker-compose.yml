@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   led-server:
-    build: .
+    build: ./server
     container_name: led-control-server
     ports:
       - "5005:5005"
