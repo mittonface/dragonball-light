@@ -1,120 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LED Control</title>
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #1a1a1a;
-            color: white;
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #3a3a3a;
+        color: white;
+      }
+      .led-indicator {
+        width: 50vmin;
+        height: 50vmin;
+        border-radius: 50%;
+        margin: auto;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        cursor: pointer;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .star {
+        position: absolute;
+        font-size: 12vmin;
+        color: #d13e00;
+        text-shadow: 0 0 10px rgba(209, 62, 0, 0.5);
+        transition: all 0.3s ease;
+      }
+      .led-on .star {
+        color: #e67e22;
+        text-shadow: 0 0 20px #e67e22, 0 0 40px #e67e22;
+        animation: twinkle 1.5s ease-in-out infinite alternate;
+      }
+      @keyframes twinkle {
+        0% {
+          opacity: 0.7;
+          transform: scale(1);
         }
-        .container {
-            text-align: center;
-            padding: 2rem;
-            background-color: #2a2a2a;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        50% {
+          opacity: 1;
+          transform: scale(1.1);
         }
-        .led-indicator {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            margin: 2rem auto;
-            transition: all 0.3s ease;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-            cursor: pointer;
+        100% {
+          opacity: 0.9;
+          transform: scale(1.05);
         }
-        .led-on {
-            background-color: #fda52f;
-            box-shadow: 0 0 30px #fda52f;
-        }
-        .led-off {
-            background-color: #f44c1e;
-        }
-        .status {
-            margin-top: 1rem;
-            font-size: 14px;
-            color: #aaa;
-        }
-        .connection-status {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-left: 5px;
-        }
-        .connected {
-            background-color: #00ff00;
-        }
-        .disconnected {
-            background-color: #ff0000;
-        }
+      }
+      .star-1 {
+        top: 23%;
+        left: 27%;
+      }
+      .star-2 {
+        top: 23%;
+        right: 27%;
+      }
+      .star-3 {
+        bottom: 23%;
+        left: 27%;
+      }
+      .star-4 {
+        bottom: 23%;
+        right: 27%;
+      }
+      .led-on {
+        background-color: #fda52f;
+        box-shadow: 0 0 30px #fda52f;
+      }
+      .led-off {
+        background-color: #f44c1e;
+      }
+      .status {
+        margin-top: 1rem;
+        font-size: 14px;
+        color: #aaa;
+      }
+      .connection-status {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-left: 5px;
+      }
+      .connected {
+        background-color: #00ff00;
+      }
+      .disconnected {
+        background-color: #ff0000;
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <div id="led" class="led-indicator led-off" onclick="toggleLED()"></div>
-        <div class="status">
-            <span id="connectionStatus" class="connection-status disconnected"></span>
-        </div>
+  </head>
+  <body>
+    <div id="led" class="led-indicator led-on" onclick="toggleLED()">
+      <div class="star star-1">★</div>
+      <div class="star star-2">★</div>
+      <div class="star star-3">★</div>
+      <div class="star star-4">★</div>
     </div>
 
     <script>
-        const socket = io();
-        let currentState = 'off';
+      const socket = io();
+      let currentState = "off";
 
-        socket.on('connect', function() {
-            document.getElementById('connectionStatus').className = 'connection-status connected';
-        });
+      socket.on("connect", function () {
+        document.getElementById("connectionStatus").className =
+          "connection-status connected";
+      });
 
-        socket.on('disconnect', function() {
-            document.getElementById('connectionStatus').className = 'connection-status disconnected';
-        });
+      socket.on("disconnect", function () {
+        document.getElementById("connectionStatus").className =
+          "connection-status disconnected";
+      });
 
-        socket.on('current_state', function(data) {
-            updateUI(data.state);
-        });
+      socket.on("current_state", function (data) {
+        updateUI(data.state);
+      });
 
-        socket.on('state_change', function(data) {
-            updateUI(data.state);
-        });
+      socket.on("state_change", function (data) {
+        updateUI(data.state);
+      });
 
-        function updateUI(state) {
-            currentState = state;
-            const led = document.getElementById('led');
+      function updateUI(state) {
+        currentState = state;
+        const led = document.getElementById("led");
 
-            if (state === 'on') {
-                led.className = 'led-indicator led-on';
-            } else {
-                led.className = 'led-indicator led-off';
-            }
+        if (state === "on") {
+          led.className = "led-indicator led-on";
+        } else {
+          led.className = "led-indicator led-off";
         }
+      }
 
-        async function toggleLED() {
-            const newState = currentState === 'on' ? 'off' : 'on';
-            try {
-                const response = await fetch('/api/toggle', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ state: newState })
-                });
-                if (!response.ok) {
-                    console.error('Failed to toggle LED');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-            }
+      async function toggleLED() {
+        const newState = currentState === "on" ? "off" : "on";
+        try {
+          const response = await fetch("/api/toggle", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ state: newState }),
+          });
+          if (!response.ok) {
+            console.error("Failed to toggle LED");
+          }
+        } catch (error) {
+          console.error("Error:", error);
         }
+      }
     </script>
-</body>
+  </body>
 </html>
