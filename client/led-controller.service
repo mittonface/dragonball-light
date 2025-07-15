@@ -4,9 +4,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=pi
-WorkingDirectory=/home/pi/led-controller
-ExecStart=/usr/bin/python3 /home/pi/led-controller/led_controller.py --server http://YOUR_SERVER_IP:5005
+User=brent
+WorkingDirectory=/home/brent/dragonball-light/client
+ExecStart=/home/brent/dragonball-light/client/venv/bin/python /home/brent/dragonball-light/client/led_controller.py --server https://dragonball.mittn.ca
 Restart=always
 RestartSec=10
 
