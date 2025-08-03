@@ -93,6 +93,27 @@
           transform: translateY(-200px);
         }
       }
+      .shooting-star {
+        position: fixed;
+        width: 2px;
+        height: 2px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        box-shadow: 0 0 4px 1px rgba(255, 255, 255, 0.6), 0 0 8px 2px rgba(255, 255, 255, 0.3);
+        pointer-events: none;
+        z-index: -1;
+      }
+      .shooting-star::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: calc(var(--tail-length, 150px) * -1);
+        width: var(--tail-length, 150px);
+        height: 1px;
+        background: linear-gradient(to left, rgba(255,255,255,0.6), rgba(255,255,255,0.3) 40%, transparent);
+        transform: translateY(-50%);
+        box-shadow: 0 0 4px 1px rgba(255,255,255,0.2);
+      }
       .led-indicator {
         width: 50vmin;
         height: 50vmin;
@@ -358,6 +379,120 @@
           console.error("Error:", error);
         }
       }
+
+      // Create shooting stars occasionally
+      function createShootingStar() {
+        const star = document.createElement("div");
+        star.className = "shooting-star";
+
+        // Random starting edge (0=top, 1=right, 2=bottom, 3=left)
+        const edge = Math.floor(Math.random() * 4);
+        let startX, startY, endX, endY;
+        const distance = 800;
+        
+        switch(edge) {
+          case 0: // From top
+            startX = Math.random() * window.innerWidth;
+            startY = -50;
+            // Can go left, right, or straight down
+            const topDirection = Math.random();
+            if (topDirection < 0.33) {
+              endX = startX - distance/2;
+              endY = startY + distance;
+            } else if (topDirection < 0.66) {
+              endX = startX + distance/2;
+              endY = startY + distance;
+            } else {
+              endX = startX + distance;
+              endY = startY + distance;
+            }
+            break;
+          case 1: // From right
+            startX = window.innerWidth + 50;
+            startY = Math.random() * window.innerHeight;
+            endX = startX - distance;
+            endY = startY + (Math.random() - 0.5) * distance;
+            break;
+          case 2: // From bottom
+            startX = Math.random() * window.innerWidth;
+            startY = window.innerHeight + 50;
+            endX = startX + (Math.random() - 0.5) * distance;
+            endY = startY - distance;
+            break;
+          case 3: // From left
+            startX = -50;
+            startY = Math.random() * window.innerHeight;
+            endX = startX + distance;
+            endY = startY + (Math.random() - 0.5) * distance;
+            break;
+        }
+        
+        star.style.left = startX + "px";
+        star.style.top = startY + "px";
+        
+        // Calculate angle for the trail
+        const angle = Math.atan2(endY - startY, endX - startX) * 180 / Math.PI;
+        star.style.transform = `rotate(${angle}deg)`;
+        
+        // Random duration between 2000ms (current speed) and 800ms (faster)
+        const duration = Math.random() * 1200 + 800;
+        
+        // Calculate tail length based on speed (faster = longer tail)
+        // Duration 800ms = tail 250px, Duration 2000ms = tail 150px
+        const tailLength = 150 + (2000 - duration) * 0.083;
+        
+        // Create and style the tail dynamically
+        const tail = star.querySelector('::before') || star;
+        star.style.setProperty('--tail-length', tailLength + 'px');
+        
+        // Animate position
+        star.animate([
+          { 
+            left: startX + "px", 
+            top: startY + "px"
+          },
+          { 
+            left: endX + "px", 
+            top: endY + "px"
+          }
+        ], {
+          duration: duration,
+          easing: "linear"
+        });
+        
+        // Animate opacity separately for smooth fade
+        star.animate([
+          { opacity: 1, offset: 0 },
+          { opacity: 1, offset: 0.7 },
+          { opacity: 0, offset: 1 }
+        ], {
+          duration: duration,
+          easing: "linear"
+        });
+
+        document.body.appendChild(star);
+
+        // Remove the star after animation completes
+        setTimeout(() => {
+          star.remove();
+        }, duration);
+      }
+
+      // Create shooting stars at random intervals
+      function scheduleShootingStar() {
+        // Random delay between 8-20 seconds
+        const delay = Math.random() * 12000 + 8000;
+        setTimeout(() => {
+          createShootingStar();
+          scheduleShootingStar();
+        }, delay);
+      }
+
+      // Start the shooting star effect after a short delay
+      setTimeout(() => {
+        createShootingStar(); // Create first one immediately
+        scheduleShootingStar();
+      }, 1000);
     </script>
   </body>
 </html>
