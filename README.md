@@ -119,6 +119,8 @@ pip3 install -r requirements.txt
 python3 led_controller.py --server http://YOUR_SERVER_IP:5005 --hub 1-1 --port 2
 ```
 
+**Note:** The client defaults to `http://localhost:5005` if no server is specified.
+
 ## API Endpoints
 
 - `GET /` - Web interface
@@ -128,12 +130,12 @@ python3 led_controller.py --server http://YOUR_SERVER_IP:5005 --hub 1-1 --port 2
 ## WebSocket Events
 
 **Server → Client:**
-- `current_state` - Sent on connection with current LED state
-- `state_change` - Broadcast when state changes
+- `current_state` - Sent to the specific client upon connection with current LED state (emitted to individual client, not broadcast)
+- `state_change` - Broadcast to all connected clients when state changes
 
 **Client → Server:**
-- `pi_connected` - Raspberry Pi announces connection
-- `state_update` - Pi confirms state change
+- `pi_connected` - Raspberry Pi announces connection (server responds with `current_state`)
+- `state_update` - Pi sends state confirmation, which triggers server to broadcast `state_change` to all clients
 
 ## Requirements
 

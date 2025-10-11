@@ -67,8 +67,10 @@ docker run -d \
 For production, use a WSGI server like Gunicorn:
 ```bash
 pip install gunicorn
-gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:5000 app:app
+gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:5005 app:app
 ```
+
+**Note:** The `-w 1` (single worker) configuration is required when using eventlet with Socket.IO to ensure proper WebSocket handling.
 
 ## Raspberry Pi Client Setup
 
