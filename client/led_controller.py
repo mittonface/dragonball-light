@@ -73,11 +73,11 @@ class LEDController:
 
 def main():
     parser = argparse.ArgumentParser(description='LED Controller for Raspberry Pi')
-    parser.add_argument('--server', default='http://localhost:5000', 
-                        help='Server URL (default: http://localhost:5000)')
-    parser.add_argument('--hub', default='1-1', 
+    parser.add_argument('--server', default='http://localhost:5005',
+                        help='Server URL (default: http://localhost:5005)')
+    parser.add_argument('--hub', default='1-1',
                         help='USB hub location (default: 1-1)')
-    parser.add_argument('--port', default='2', 
+    parser.add_argument('--port', default='2',
                         help='USB port number (default: 2)')
     
     args = parser.parse_args()
