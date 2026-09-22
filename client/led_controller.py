@@ -6,9 +6,14 @@ import sys
 import os
 import argparse
 import logging
+import threading
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# If disconnected this long, exit and let systemd restart us with a fresh client
+WATCHDOG_TIMEOUT = 120
+UHUBCTL_TIMEOUT = 15
 
 class LEDController:
     def __init__(self, server_url, hub_location='1-1', port_number='2'):
@@ -17,6 +22,7 @@ class LEDController:
         self.port_number = port_number
         self.current_state = 'off'
         self.sio = socketio.Client()
+        self.last_connected = time.monotonic()
         self.setup_handlers()
         
     def setup_handlers(self):
@@ -42,25 +48,37 @@ class LEDController:
             self.set_led(state)
     
     def set_led(self, state):
-        if state == self.current_state:
-            logger.info(f"LED already in state: {state}")
-            return
-            
+        # Always apply to hardware (uhubctl is idempotent) so a hub that drifted
+        # out of sync with current_state still gets corrected.
         action = 'on' if state == 'on' else 'off'
         cmd = ['sudo', 'uhubctl', '-l', self.hub_location, '-p', self.port_number, '-a', action]
         
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            self.current_state = state
+            subprocess.run(cmd, capture_output=True, text=True, check=True, timeout=UHUBCTL_TIMEOUT)
             logger.info(f"LED turned {state}")
-            self.sio.emit('state_update', {'state': state})
+            # Only report actual changes, otherwise the server's broadcast echo would loop
+            if state != self.current_state:
+                self.current_state = state
+                self.sio.emit('state_update', {'state': state})
+        except subprocess.TimeoutExpired:
+            logger.error(f"uhubctl timed out after {UHUBCTL_TIMEOUT}s")
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to control LED: {e}")
             logger.error(f"stderr: {e.stderr}")
         except Exception as e:
             logger.error(f"Unexpected error: {e}")
     
+    def watchdog(self):
+        while True:
+            time.sleep(10)
+            if self.sio.connected:
+                self.last_connected = time.monotonic()
+            elif time.monotonic() - self.last_connected > WATCHDOG_TIMEOUT:
+                logger.error(f"Disconnected for over {WATCHDOG_TIMEOUT}s, exiting so systemd restarts us")
+                os._exit(1)
+
     def run(self):
+        threading.Thread(target=self.watchdog, daemon=True).start()
         while True:
             try:
                 logger.info(f"Attempting to connect to {self.server_url}")
