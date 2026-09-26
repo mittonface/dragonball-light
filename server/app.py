@@ -42,6 +42,11 @@ def handle_pi_connected():
     print("Raspberry Pi connected")
     emit('current_state', {'state': led_state['status']})
 
+@socketio.on('heartbeat')
+def handle_heartbeat():
+    # Acked by the Pi client to prove the connection really works end to end
+    return 'ok'
+
 @socketio.on('state_update')
 def handle_state_update(data):
     current_state = data.get('state')

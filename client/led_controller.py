@@ -11,8 +11,10 @@ import threading
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# If disconnected this long, exit and let systemd restart us with a fresh client
+# If the server hasn't answered a heartbeat this long, exit and let systemd restart us
 WATCHDOG_TIMEOUT = 120
+HEARTBEAT_INTERVAL = 30
+HEARTBEAT_TIMEOUT = 10
 UHUBCTL_TIMEOUT = 15
 
 class LEDController:
@@ -21,31 +23,36 @@ class LEDController:
         self.hub_location = hub_location
         self.port_number = port_number
         self.current_state = 'off'
-        self.sio = socketio.Client()
-        self.last_connected = time.monotonic()
-        self.setup_handlers()
-        
-    def setup_handlers(self):
-        @self.sio.on('connect')
+        self.sio = None
+        self.last_healthy = time.monotonic()
+
+    def new_client(self):
+        # Reconnection is handled by run() with a fresh client each time; the
+        # library's own reconnect racing our loop left a zombie "connected" client.
+        sio = socketio.Client(reconnection=False)
+
+        @sio.on('connect')
         def on_connect():
             logger.info(f"Connected to server at {self.server_url}")
-            self.sio.emit('pi_connected')
+            self.last_healthy = time.monotonic()
             
-        @self.sio.on('disconnect')
+        @sio.on('disconnect')
         def on_disconnect():
             logger.info("Disconnected from server")
             
-        @self.sio.on('current_state')
+        @sio.on('current_state')
         def on_current_state(data):
             state = data.get('state', 'off')
             logger.info(f"Received initial state: {state}")
             self.set_led(state)
             
-        @self.sio.on('state_change')
+        @sio.on('state_change')
         def on_state_change(data):
             state = data.get('state', 'off')
             logger.info(f"State change requested: {state}")
             self.set_led(state)
+
+        return sio
     
     def set_led(self, state):
         # Always apply to hardware (uhubctl is idempotent) so a hub that drifted
@@ -69,25 +76,38 @@ class LEDController:
             logger.error(f"Unexpected error: {e}")
     
     def watchdog(self):
+        # sio.connected can stay True on a dead connection, so require the
+        # server to actually answer a round trip.
         while True:
-            time.sleep(10)
-            if self.sio.connected:
-                self.last_connected = time.monotonic()
-            elif time.monotonic() - self.last_connected > WATCHDOG_TIMEOUT:
-                logger.error(f"Disconnected for over {WATCHDOG_TIMEOUT}s, exiting so systemd restarts us")
+            time.sleep(HEARTBEAT_INTERVAL)
+            sio = self.sio
+            if sio is not None and sio.connected:
+                try:
+                    sio.call('heartbeat', timeout=HEARTBEAT_TIMEOUT)
+                    self.last_healthy = time.monotonic()
+                except Exception as e:
+                    logger.warning(f"Heartbeat failed: {e!r}")
+            if time.monotonic() - self.last_healthy > WATCHDOG_TIMEOUT:
+                logger.error(f"No heartbeat for over {WATCHDOG_TIMEOUT}s, exiting so systemd restarts us")
                 os._exit(1)
 
     def run(self):
         threading.Thread(target=self.watchdog, daemon=True).start()
         while True:
+            self.sio = self.new_client()
             try:
                 logger.info(f"Attempting to connect to {self.server_url}")
-                self.sio.connect(self.server_url)
+                self.sio.connect(self.server_url, wait_timeout=10)
                 self.sio.wait()
             except Exception as e:
                 logger.error(f"Connection error: {e}")
-                logger.info("Retrying in 5 seconds...")
-                time.sleep(5)
+            finally:
+                try:
+                    self.sio.disconnect()
+                except Exception:
+                    pass
+            logger.info("Retrying in 5 seconds...")
+            time.sleep(5)
 
 def main():
     parser = argparse.ArgumentParser(description='LED Controller for Raspberry Pi')
